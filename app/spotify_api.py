@@ -32,7 +32,7 @@ class SpotifyData(BaseModel):
 
 spotify_data = SpotifyData.load()
 
-client = httpx.AsyncClient()
+client = httpx.AsyncClient(timeout=30)
 
 refresh_lock = asyncio.Lock()
 

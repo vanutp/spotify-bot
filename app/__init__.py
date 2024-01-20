@@ -101,7 +101,7 @@ async def feedback(e: UpdateBotInlineSend):
     try:
         track = tracks_memcache[e.id]
         youtube_id = await spotify_to_youtube(e.id)
-        py_file = await download_youtube(youtube_id)
+        py_file, duration = await download_youtube(youtube_id)
         cached_file = cache.sent_docs.get(e.id)
         if cached_file:
             file = cached_file.to_tg()
@@ -110,7 +110,7 @@ async def feedback(e: UpdateBotInlineSend):
                 py_file,
                 attributes=[
                     DocumentAttributeAudio(
-                        duration=1,
+                        duration=duration,
                         voice=False,
                         title=track.name,
                         performer=track.artist,

@@ -32,14 +32,15 @@ def _download(youtube_id: str, directory: str):
             'outtmpl': os.path.join(directory, 'dl.%(ext)s'),
         }
     ) as ydl:
-        return ydl.download(youtube_id)
+        return ydl.extract_info(youtube_id)
 
 
-async def download_youtube(youtube_id: str) -> BytesIO:
+async def download_youtube(youtube_id: str) -> tuple[BytesIO, int]:
     with TemporaryDirectory() as tmpdir:
-        await asyncio.get_event_loop().run_in_executor(
+        info = await asyncio.get_event_loop().run_in_executor(
             None, functools.partial(_download, youtube_id, tmpdir)
         )
+        duration = info['duration']
         files = os.listdir(tmpdir)
         assert len(files) == 1
         fn = os.path.join(tmpdir, files[0])
@@ -58,4 +59,4 @@ async def download_youtube(youtube_id: str) -> BytesIO:
         with open(fn2, 'rb') as f:
             res = io.BytesIO(f.read())
         res.name = os.path.basename(fn2)
-        return res
+        return res, duration
