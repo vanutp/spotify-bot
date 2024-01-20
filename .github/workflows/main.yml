@@ -1,0 +1,43 @@
+name: Build & deploy
+
+on:
+  push:
+    branches:
+      - master
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  deploy:
+    name: Build & deploy
+    runs-on: ubuntu-latest
+    permissions: write-all
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: GHCR login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          tags: ghcr.io/vanutp/spotify-bot:latest
+          push: true
+
+      - name: Deploy
+        env:
+          UPDATE_POST_KEY: ${{ secrets.UPDATE_POST_KEY }}
+        run: |
+          curl --request POST \
+               --url https://vhap-update.vanutp.dev/update \
+               --header "Content-Type: application/json" \
+               --data '{"key":"'$UPDATE_POST_KEY'"}' \
+               --fail
