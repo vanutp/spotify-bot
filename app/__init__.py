@@ -113,11 +113,11 @@ async def on_inline_query(e: events.InlineQuery.Event):
 async def feedback(e: UpdateBotInlineSend):
     try:
         track = tracks_memcache[e.id]
-        youtube_id = await spotify_to_youtube(e.id)
         cached_file = cache.sent_docs.get(e.id)
         if cached_file:
             file = cached_file.to_tg()
         else:
+            youtube_id = await spotify_to_youtube(e.id)
             py_file, duration = await download_youtube(youtube_id)
             _, media, _ = await bot._file_to_media(
                 py_file,
