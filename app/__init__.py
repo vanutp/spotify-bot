@@ -1,7 +1,7 @@
 import logging
 
 import aiorun
-from telethon import TelegramClient, events, Button
+from telethon import TelegramClient, events, Button, errors
 from telethon.tl import types, functions
 from telethon.tl.custom import InlineBuilder
 from telethon.tl.patched import Message
@@ -28,7 +28,12 @@ empty_file: types.TypeInputFile = None
 tracks_memcache: dict[str, Track] = {}
 
 
-async def get_cached_track(track: Track) -> types.InputBotInlineResultDocument:
+async def update_empty_file():
+    global empty_file
+    empty_file = await bot.upload_file('app/empty.mp3')
+
+
+async def _get_cached_track(track: Track) -> types.InputBotInlineResultDocument:
     cached_file = cache.inline_docs.get(track.id)
     if cached_file:
         file = cached_file.to_tg()
@@ -55,6 +60,14 @@ async def get_cached_track(track: Track) -> types.InputBotInlineResultDocument:
         cache.inline_docs[track.id] = CachedDocument.from_tg(res.document)
         cache.save()
     return res
+
+
+async def get_cached_track(track: Track) -> types.InputBotInlineResultDocument:
+    try:
+        return await _get_cached_track(track)
+    except (errors.FilePartMissingError, errors.FilePart0MissingError, TypeError):
+        await update_empty_file()
+        return await _get_cached_track(track)
 
 
 @bot.on(events.NewMessage(func=lambda msg: msg.is_private))
@@ -133,9 +146,8 @@ async def feedback(e: UpdateBotInlineSend):
 
 
 async def amain():
-    global empty_file
     await bot.start(bot_token=config.bot_token)
-    empty_file = await bot.upload_file('app/empty.mp3')
+    await update_empty_file()
     logger.info('Bot started')
     await bot.run_until_disconnected()
 
