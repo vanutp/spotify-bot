@@ -12,6 +12,7 @@ class Config(BaseSettings):
     spotify_client_secret: str
     spotify_redirect_uri: str
     data_dir: Path = 'data'
+    proxy: str | None = None
 
 
 config = Config(_env_file='.env')

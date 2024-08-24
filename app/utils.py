@@ -1,13 +1,14 @@
 import asyncio
 import functools
 import io
-import json
 import os.path
 from io import BytesIO
 from tempfile import TemporaryDirectory
 
 import httpx
 from yt_dlp import YoutubeDL
+
+from app import config
 
 client = httpx.AsyncClient(timeout=30)
 
@@ -25,13 +26,14 @@ async def spotify_to_youtube(spotify_id: str) -> str:
 
 
 def _download(youtube_id: str, directory: str):
-    with YoutubeDL(
-        {
-            'format': 'bestaudio',
-            'quiet': True,
-            'outtmpl': os.path.join(directory, 'dl.%(ext)s'),
-        }
-    ) as ydl:
+    params = {
+        'format': 'bestaudio',
+        'quiet': True,
+        'outtmpl': os.path.join(directory, 'dl.%(ext)s'),
+    }
+    if config.proxy:
+        params['proxy'] = config.proxy
+    with YoutubeDL(params) as ydl:
         return ydl.extract_info(youtube_id)
 
 
